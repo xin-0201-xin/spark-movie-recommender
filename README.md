@@ -1,131 +1,140 @@
 # Distributed Movie Recommendation System (PySpark + ALS)
 
-A distributed movie recommendation engine built using **PySpark and Spark MLlib (ALS)** in a Databricks environment.  
-This project demonstrates scalable data processing, collaborative filtering, cross-validation tuning, and evaluation using both regression and ranking metrics.
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![PySpark](https://img.shields.io/badge/PySpark-MLlib-orange)
+![Databricks](https://img.shields.io/badge/Databricks-Cloud-red)
+![Model](https://img.shields.io/badge/Model-ALS-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ---
 
-## 1. Project Overview
+## Overview
 
-This project implements an end-to-end recommendation workflow including:
+A scalable collaborative filtering system built using **PySpark and Spark MLlib (ALS)** in a distributed Databricks environment.
+
+This project demonstrates:
 
 - Distributed data processing with Spark
-- Exploratory Data Analysis (EDA)
-- Collaborative Filtering using Alternating Least Squares (ALS)
-- Train/Test split comparison
-- Cross-validation and hyperparameter tuning
-- Model evaluation using RMSE, MAE, Precision, Recall, and F1
-- Personalized recommendations for selected users
-
-The objective is to evaluate how data splits and hyperparameters affect recommendation performance in a distributed environment.
+- ALS-based matrix factorization
+- Train/test split comparison
+- Cross-validation hyperparameter tuning
+- Evaluation using regression and ranking metrics
+- Scalable recommendation generation
 
 ---
 
-## 2. System Architecture
+## System Architecture
 
-Data → Spark DataFrame → ALS Model → Cross-Validation → Evaluation → Recommendations
+Raw Ratings Data
+↓
+Spark DataFrame Processing
+↓
+ALS Model Training
+↓
+Cross-Validation
+↓
+Evaluation (RMSE / F1)
+↓
+Personalized Recommendations
 
-All computations were executed in a distributed Spark environment (Databricks).
+
+All computations were executed in a distributed Spark environment.
 
 ---
 
-## 3. Dataset
+## Dataset
 
-Movie ratings dataset (course-provided).
+Movie ratings dataset containing:
 
-- UserID
-- MovieID
-- Rating
-- Timestamp
+- UserID  
+- MovieID  
+- Rating  
+- Timestamp  
 
 ⚠️ Dataset is not included in this repository.
 
 ---
 
-## 4. Exploratory Data Analysis
+## Exploratory Data Analysis
 
-Key insights:
-- Distribution of ratings across users and movies
-- Identification of highly active users
-- Rating sparsity analysis
-- Top movies by average rating
+Before modeling, rating distribution and sparsity patterns were analyzed.
 
-EDA was performed using Spark DataFrames with visualization support.
+### Rating Distribution
 
----
+![Rating Distribution](assets/rating_distribution.png)
 
-## 5. Model Implementation
+**Observations:**
 
-### 5.1 Collaborative Filtering
-
-Algorithm: **ALS (Alternating Least Squares)**  
-Library: `pyspark.ml.recommendation.ALS`
-
-Key characteristics:
-- Handles large-scale sparse matrices
-- Parallelized across Spark cluster
-- Implicit feedback handling available (not used in this version)
+- Ratings are heavily skewed toward 3–4 stars.
+- Data sparsity is significant, typical for collaborative filtering tasks.
+- A small portion of active users contributes a large number of ratings.
 
 ---
 
-### 5.2 Train/Test Split Comparison
+## Model Implementation
 
-The dataset was evaluated under multiple split ratios:
+### Algorithm
 
-- 60/40
-- 70/30
-- 75/25
-- 80/20
-
-Performance was compared using RMSE to determine optimal configuration.
-
-Best observed configuration:
-- 80/20 split
-- RMSE ≈ 0.93
+- Alternating Least Squares (ALS)
+- Spark MLlib
+- Distributed matrix factorization
 
 ---
 
-### 5.3 Hyperparameter Tuning
+### Train/Test Split Comparison
 
-Cross-validation performed over:
+Performance comparison across multiple splits:
 
-- rank ∈ {8, 10, 12}
-- regParam ∈ {0.05, 0.1, 0.15}
-- maxIter ∈ {10, 15}
+| Split Ratio | RMSE |
+|-------------|------|
+| 60/40       | 0.xxx |
+| 70/30       | 0.xxx |
+| 75/25       | 0.xxx |
+| 80/20       | **0.93** |
 
-Grid search was used to evaluate parameter impact on RMSE.
-
-Insights:
-- Increasing rank improved representational capacity but increased training time
-- Higher regularization reduced overfitting but may increase bias
-- Trade-off between model complexity and runtime was observed
+Best performance observed with **80/20 split**.
 
 ---
 
-## 6. Model Evaluation
+## Hyperparameter Tuning
+
+Grid search performed over:
+
+- `rank ∈ {8, 10, 12}`
+- `regParam ∈ {0.05, 0.1, 0.15}`
+- `maxIter ∈ {10, 15}`
+
+### RMSE Heatmap (maxIter = 15)
+
+![RMSE Heatmap](assets/rmse_heatmap.png)
+
+**Insights:**
+
+- Increasing rank improves representational power but increases computation.
+- Regularization balances bias–variance trade-off.
+- Optimal configuration achieves lowest RMSE while maintaining stability.
+
+---
+
+## Model Evaluation
 
 ### Regression Metrics
+
 - RMSE
 - MAE
 - MSE
 
-### Ranking Metrics (Threshold-based relevance)
-- Precision
-- Recall
-- F1 Score
+### Ranking Metrics (Threshold ≥ 3.0)
 
-Example observation:
-- Precision ≈ 0.75
-- Recall ≈ 0.14
-- F1 ≈ 0.24
+- Precision ≈ 0.75  
+- Recall ≈ 0.14  
+- F1 Score ≈ 0.24  
 
-High precision but lower recall indicates the model favors confident recommendations.
+High precision indicates confident recommendations, while lower recall reflects conservative prediction behavior.
 
 ---
 
-## 7. Personalized Recommendations
-
-Recommendations were generated for selected user IDs using:
+## Generating Recommendations
 
 ```python
-model.recommendForAllUsers()
+model.recommendForAllUsers(5)
